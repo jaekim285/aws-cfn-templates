@@ -1,0 +1,864 @@
+AWSTemplateFormatVersion: 2010-09-09 
+ 
+Description: >- 
+  This template deploys a front-end web stack. 
+ 
+  Dependencies 
+  '{{resolve:ssm:sns-infrastructure-topic:1}}' 
+  '{{resolve:ssm:VPC:1}}' 
+  '{{resolve:ssm:infrastructure-bucket:1}}' 
+  '{{resolve:ssm:AccountShortName:1}}' 
+  '{{resolve:ssm:DirectoryId:1}}' 
+  '{{resolve:ssm:InstallersBucket:1}}' 
+  '{{resolve:ssm:siteminder-ag:1}}' 
+  '{{resolve:ssm:websubnet1:1}}' 
+  '{{resolve:ssm:websubnet2:1}}' 
+  '{{resolve:ssm:websubnet3:1}}' 
+  cis-latest-ami-2016 
+ 
+Metadata: 
+  'AWS::CloudFormation::Interface': 
+    ParameterGroups: 
+      - # General Configuration 
+        Label: 
+          default: General Configuration 
+        Parameters: 
+          - NameTag 
+          - S3Folder 
+          - MsSqlAccessSgr 
+      - # Release 
+        Label: 
+          default: Release files 
+        Parameters: 
+          - PortalWebFile 
+          - PortalWebTemplateFile 
+      - # Web Servers 
+        Label: 
+          default: Web Servers 
+        Parameters: 
+          - WebFrontendAsgMinSize 
+          - WebFrontendAsgMaxSize 
+          - WebFrontendLBCertificateArn 
+        #   - AppTierLbSg 
+    ParameterLabels: 
+    # Basic Configuration 
+      MsSqlAccessSgr: 
+        default: MS SQL Access Security Group 
+      NameTag: 
+        default: Name Tag 
+      S3Folder: 
+        default: S3 Folder 
+    # Web Servers 
+    #   AppTierLbSg: 
+    #     default: Application Tier Load Balancer Security Group 
+      WebFrontendAsgMaxSize: 
+        default: Web Front-end Auto Scaling Group Max Size 
+      WebFrontendAsgMinSize: 
+        default: Web Front-end Auto Scaling Group Min Size 
+      WebFrontendLBCertificateArn: 
+        default: Load Balancer Certificate ARN 
+      PortalWebFile: 
+        default: Enter the file name of the portal web release, ex portalweb.zip 
+      PortalWebTemplateFile: 
+        default: Enter the file name of the portal web template release, ex portal_web_template.zip 
+Parameters: 
+# Basic Configuration 
+  NameTag: 
+    Description: Used for creating name tags and labels 
+    Type: String 
+  MsSqlAccessSgr: 
+    Description: >- 
+      Enter the Security Group that will allow the Policy Server(s) to access SQL 
+    Type: AWS::EC2::SecurityGroup::Id 
+  S3Folder: 
+    Description: >- 
+      Enter the project folder name. This is used to locate the lambda function code. 
+    Type: String 
+# Web Servers 
+#   AppTierLbSg: 
+#     Description: >- 
+#       Enter the Security Group Id for the App Tier (ECS) Load Balancer. 
+#     Type: 'AWS::EC2::SecurityGroup::Id' 
+  WebFrontendAsgMaxSize: 
+    Default: 3 
+    Description: Enter the maximum size you would like the ASG to be limited to. 
+    MaxValue: 9 
+    MinValue: 1
+    Type: Number 
+  WebFrontendAsgMinSize: 
+    Default: 1 
+    Description: Enter the minimum size you would like the ASG to be limited to. 
+    MaxValue: 6 
+    MinValue: 1 
+    Type: Number 
+  WebFrontendLBCertificateArn: 
+    AllowedPattern: '^arn:aws:acm:us-west-2:\d{12}:certificate/.+$' 
+    Description: Enter the ARN for the ceritifcate to associate with the load balancer. 
+    Type: String 
+# Release 
+  PortalWebFile: 
+    Description: >- 
+      Enter the file name of the portal web release, ex portalweb.zip 
+    Type: String 
+    Default: portalweb.zip 
+  PortalWebTemplateFile: 
+    Description: >- 
+      Enter the file name of the portal web template release, ex portal_web_template.zip 
+    Type: String 
+    Default: portal_web_template.zip 
+# Test Parameters 
+  AccountShortNameParam: 
+    AllowedValues: 
+      - "AccountShortName" 
+    Default: "AccountShortName" 
+    Description: Checks for AccountShortName SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  BinariesBucketParam: 
+    AllowedValues: 
+      - "infrastructure-bucket" 
+    Default: "infrastructure-bucket" 
+    Description: Checks for infrastructure-bucket-bucket SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  CIS2016Param: 
+    AllowedValues: 
+      - "cis-latest-ami-2016" 
+    Default: "cis-latest-ami-2016" 
+    Description: Checks for cis-latest-ami-2016 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  DirectoryIdParam: 
+    AllowedValues: 
+      - "DirectoryId" 
+    Default: "DirectoryId" 
+    Description: Checks for DirectoryId SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  SharedSubnet1Param: 
+    AllowedValues: 
+      - "sharedsubnet1" 
+    Default: "sharedsubnet1" 
+    Description: Checks for sharedsubnet1 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  SharedSubnet2Param: 
+    AllowedValues: 
+      - "sharedsubnet2" 
+    Default: "sharedsubnet2" 
+    Description: Checks for sharedsubnet2 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  SharedSubnet3Param: 
+    AllowedValues: 
+      - "sharedsubnet3" 
+    Default: "sharedsubnet3" 
+    Description: Checks for sharedsubnet3 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  WebSubnet1Param: 
+    AllowedValues: 
+      - "websubnet1" 
+    Default: "websubnet1" 
+    Description: Checks for websubnet1 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  WebSubnet2Param: 
+    AllowedValues: 
+      - "websubnet2" 
+    Default: "websubnet2" 
+    Description: Checks for websubnet2 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  WebSubnet3Param: 
+    AllowedValues: 
+      - "websubnet3" 
+    Default: "websubnet3" 
+    Description: Checks for websubnet3 SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+  VPCParam: 
+    AllowedValues: 
+      - "VPC" 
+    Default: "VPC" 
+    Description: Checks for VPC SSM Parameter 
+    Type: AWS::SSM::Parameter::Name 
+Resources: 
+# Security Groups 
+  sgWebLb: 
+    Type: 'AWS::EC2::SecurityGroup' 
+    Properties:  
+      GroupDescription: !Sub "${NameTag} Front-end Web Server Load Balancers" 
+      GroupName: !Sub "${NameTag}-web-lb" 
+      SecurityGroupIngress: 
+        - 
+          SourceSecurityGroupId: '{{resolve:ssm:siteminder-ag:1}}' 
+          FromPort: 443 
+          IpProtocol: tcp 
+          ToPort: 443 
+          Description: SiteMinder Access Gateway Servers Security Group 
+      Tags: 
+        - 
+          Key: "Name" 
+          Value: !Sub "${NameTag}-web-lb" 
+      VpcId: '{{resolve:ssm:VPC:1}}' 
+  sgWeb: 
+    Type: 'AWS::EC2::SecurityGroup' 
+    Properties:  
+      GroupDescription: !Sub "${NameTag} Front-end Web Servers" 
+      GroupName: !Sub "${NameTag}-web" 
+      SecurityGroupIngress: 
+        - 
+          SourceSecurityGroupId: !Ref sgWebLb 
+          FromPort: 443 
+          IpProtocol: tcp 
+          ToPort: 443 
+          Description: Front-end Web Load Balancers Security Group 
+        - 
+          SourceSecurityGroupId: !Ref sgWebLb 
+          FromPort: 8443 
+          IpProtocol: tcp 
+          ToPort: 8443 
+          Description: Front-end Web Load Balancers Security Group - Healthcheck 
+      Tags: 
+        - 
+          Key: "Name" 
+          Value: !Sub "${NameTag}-web" 
+      VpcId: '{{resolve:ssm:VPC:1}}' 
+# Web Servers 
+  webPolicy: 
+    Type: 'AWS::IAM::ManagedPolicy' 
+    Properties:  
+      ManagedPolicyName: !Sub "${NameTag}-web-policy" 
+      PolicyDocument:  
+        Version: "2012-10-17" 
+        Statement:  
+          - # CloudFormation 
+            Sid: CloudFormation1 
+            Effect: Allow 
+            Action: 
+              - cloudformation:SignalResource* 
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*" 
+          - # S3 
+            Sid: "S3" 
+            Effect: "Allow" 
+            Action: 
+              - "s3:GetObject" 
+            Resource: 
+              - !Sub 
+                - "arn:aws:s3:::${BinariesBucket}/${S3Folder}/*" 
+                - BinariesBucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              - !Sub 
+                - "arn:aws:s3:::${InstallersBucket}/*" 
+                - InstallersBucket: '{{resolve:ssm:InstallersBucket:1}}' 
+          - # DynamoDB 
+            Sid: "DynamoDB" 
+            Effect: "Allow" 
+            Action: 
+              - "dynamodb:*" 
+            Resource: 
+              - !Sub "arn:aws:dynamodb:us-west-2:${AWS::AccountId}:table/ASP.NET_SessionState" 
+          - # SSM 
+            Sid: SSM 
+            Effect: Allow 
+            Action: 
+              - "ssm:CreateAssociation" 
+              - "ssm:StartAutomationExecution" 
+              - "ssm:StopAutomationExecution" 
+              - "ssm:Describe*" 
+              - "ssm:Get*" 
+              - "ssm:Send*" 
+              - "ssm:List*" 
+            Resource: "*" 
+          - # SecretsManager 
+            Sid: "Secrets" 
+            Effect: "Allow" 
+            Action: 
+              - "secretsmanager:GetSecretValue" 
+              - "secretsmanager:List*" 
+              - "secretsmanager:Describe*" 
+            Resource: "arn:aws:secretsmanager:us-west-2:019926871659:secret:cert/*" 
+          - # CloudWatch1 
+              Sid: "CloudWatch1" 
+              Effect: "Allow" 
+              Action: 
+                - "logs:CreateLogGroup" 
+                - "logs:CreateLogStream" 
+                - "logs:DescribeLogGroups" 
+                - "logs:DescribeLogStreams" 
+                - "logs:PutLogEvents" 
+                - "cloudwatch:PutMetricData" 
+              Resource: "*" 
+  webRole: 
+    Type: 'AWS::IAM::Role' 
+    Properties:  
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17" 
+        Statement:  
+          -  
+            Effect: Allow 
+            Principal:  
+              Service:  
+                - ec2.amazonaws.com 
+            Action:  
+              - sts:AssumeRole 
+      ManagedPolicyArns: 
+        - !Ref webPolicy 
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM 
+      Path: "/" 
+      RoleName: !Sub "${NameTag}-web-role" 
+  webProfile:  
+    Type: 'AWS::IAM::InstanceProfile' 
+    Properties:  
+      Path: "/" 
+      Roles:  
+        -  
+          !Ref webRole 
+      InstanceProfileName: !Sub "${NameTag}-web-${AWS::Region}" 
+  WebFrontendLT: 
+    Type: 'AWS::EC2::LaunchTemplate' 
+    Metadata: 
+      'AWS::CloudFormation::Authentication': 
+        S3AccessCreds: 
+          type: S3 
+          roleName: !Ref webRole 
+          buckets: 
+            - '{{resolve:ssm:infrastructure-bucket:1}}' 
+      "AWS::CloudFormation::Init": 
+        configSets: 
+          create: 
+            - Initial 
+            - Post 
+          update: 
+            - DownloadSite 
+          default: 
+            - ConfigSet: create 
+        Initial: # Initial Config 
+          files: 
+            'C:\cfn\scripts\SetupDefaults.json': 
+              content: !Sub 
+                - | 
+                  { 
+                    "StackName": "${AWS::StackName}", 
+                    "Region": "${AWS::Region}", 
+                    "Resource": "WebFrontendASG", 
+                    "Environment": "${NameTag}", 
+                    "directoryName": "${AccountShortName}.com", 
+                    "directoryId": "${directoryId}", 
+                    "BinariesBucket": "${binariesbucket}", 
+                    "InstallersBucket": "${installersbucket}", 
+                    "PortalWebFile": "${PortalWebFile}", 
+                    "PortalWebTemplateFile": "${PortalWebTemplateFile}" 
+                  } 
+                - AccountShortName: '{{resolve:ssm:AccountShortName:1}}' 
+                  binariesbucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+                  directoryId: '{{resolve:ssm:DirectoryId:1}}' 
+                  installersbucket: '{{resolve:ssm:InstallersBucket:1}}' 
+            'C:\cfn\cfn-hup.conf': 
+              content: !Join  
+                - '' 
+                - - | 
+                    [main] 
+                  - stack= 
+                  - !Ref 'AWS::StackName' 
+                  - |+ 
+ 
+                  - region= 
+                  - !Ref 'AWS::Region' 
+                  - |+ 
+            'C:\cfn\hooks.d\cfn-auto-reloader.conf': 
+              content: !Join  
+                - '' 
+                - - | 
+                    [cfn-auto-reloader-hook] 
+                  - | 
+                    triggers=post.update 
+                  - > 
+                    path=Resources.WebFrontendLT.Metadata.AWS::CloudFormation::Init 
+                  - 'action=cfn-init.exe -v -c update -s ' 
+                  - !Ref 'AWS::StackId' 
+                  - ' -r WebFrontendLT' 
+                  - ' --region ' 
+                  - !Ref 'AWS::Region' 
+                  - |+ 
+            'C:\cfn\scripts\Initial-Setup.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Initial-Setup.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Install-PreReqs.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Install-PreReqs.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\vc_redist.x64.exe': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${installers_bucket}/web/vc_redist.x64.exe" 
+                - installers_bucket: '{{resolve:ssm:InstallersBucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\NDP472-KB4054530-x86-x64-AllOS-ENU.exe': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${installers_bucket}/web/NDP472-KB4054530-x86-x64-AllOS-ENU.exe" 
+                - installers_bucket: '{{resolve:ssm:InstallersBucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\rewrite_amd64.msi':
+              source: !Sub
+                - "https://s3-us-west-2.amazonaws.com/${installers_bucket}/web/rewrite_amd64.msi"
+                - installers_bucket: '{{resolve:ssm:InstallersBucket:1}}'
+              authentication: S3AccessCreds
+            'C:\cfn\scripts\Install-IISRewrite.ps1':
+              source: !Sub
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Install-IISRewrite.ps1"
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}'
+              authentication: S3AccessCreds
+            'C:\cfn\scripts\Install-IIS.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Install-IIS.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Install-Certs.ps1':
+              source: !Sub
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Install-Certs.ps1"
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}'
+              authentication: S3AccessCreds
+            'C:\cfn\scripts\Configure-CloudWatch.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Configure-CloudWatch.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Write-AWSEvent.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Write-AWSEvent.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\AWS.EC2.Windows.CloudWatch.json': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/AWS.EC2.Windows.CloudWatch.json" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Config-IIS.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Config-IIS.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Create-HealthCheckSite.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Create-HealthCheckSite.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Get-SiteCode.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Get-SiteCode.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Join-AD.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Join-AD.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Precache.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Precache.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+            'C:\cfn\scripts\Finalize-Setup.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Finalize-Setup.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+          commands: 
+            01SetExecutionPolicy: 
+              command: >- 
+                powershell.exe -Command "Set-ExecutionPolicy RemoteSigned -Force" 
+              waitAfterCompletion: 0 
+            02InitialSetup: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Initial-Setup.ps1" 
+              waitAfterCompletion: 0 
+            03InstallPreReqs: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Install-PreReqs.ps1" 
+              waitAfterCompletion: 0 
+            04InstallIIS: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Install-IIS.ps1" 
+              waitAfterCompletion: forever 
+            05ConfigIIS: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Config-IIS.ps1" 
+              waitAfterCompletion: 0 
+            06ConfigureCloudWatch: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Configure-CloudWatch.ps1" 
+              waitAfterCompletion: 0 
+            07InstallCerts:
+              command: >-
+                powershell.exe -Command "C:\cfn\scripts\Install-Certs.ps1"
+              waitAfterCompletion: 0
+            08InstallIISRewrite:
+              command: >-
+                powershell.exe -Command "C:\cfn\scripts\Install-IISRewrite.ps1"
+              waitAfterCompletion: 0
+            09DownloadSite: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Get-SiteCode.ps1" 
+              waitAfterCompletion: 0 
+            10JoinAD: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Join-AD.ps1" 
+              waitAfterCompletion: 60 
+          services: 
+            windows: 
+              cfn-hup: 
+                enabled: True 
+                ensureRunning: True 
+                files: 
+                  - C:\cfn\cfn-hup.conf 
+                  - C:\cfn\hooks.d\cfn-auto-reloader.conf 
+        Post: 
+          files: 
+            'D:\webroot\healthcheck\index.htm': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/index.htm" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+          commands: 
+            01CreateHealthCheck: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Create-HealthCheckSite.ps1" 
+              waitAfterCompletion: 0 
+            02Precache: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Precache.ps1" 
+              waitAfterCompletion: 0 
+            02SendSuccessSignal: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Finalize-Setup.ps1" 
+              waitAfterCompletion: 0 
+        DownloadSite: # Update Config 
+          files: 
+            'C:\cfn\scripts\Get-SiteCode.ps1': 
+              source: !Sub 
+                - "https://s3-us-west-2.amazonaws.com/${binaries_bucket}/${S3Folder}/web/Get-SiteCode.ps1" 
+                - binaries_bucket: '{{resolve:ssm:infrastructure-bucket:1}}' 
+              authentication: S3AccessCreds 
+          commands: 
+            DownloadSite: 
+              command: >- 
+                powershell.exe -Command "C:\cfn\scripts\Get-SiteCode.ps1" 
+              waitAfterCompletion: 0 
+    Properties: 
+      LaunchTemplateName: !Sub "${NameTag}-web-lt" 
+      LaunchTemplateData: 
+        BlockDeviceMappings: 
+          - DeviceName: /dev/sda1 
+            Ebs: 
+              DeleteOnTermination: true 
+              Encrypted: true 
+              VolumeSize: 50 
+              VolumeType: gp2 
+          - DeviceName: xvdf 
+            Ebs: 
+              DeleteOnTermination: true 
+              Encrypted: true 
+              VolumeSize: 30 
+              VolumeType: gp2 
+        IamInstanceProfile: 
+          Name: !Ref webProfile 
+        ImageId: '{{resolve:ssm:cis-latest-ami-2016:1}}' 
+        InstanceType: t3.large 
+        KeyName: !Join ['',['kp-','{{resolve:ssm:AccountShortName:1}}','-default']] 
+        Monitoring: 
+          Enabled: true 
+        SecurityGroupIds: 
+          - !GetAtt sgWeb.GroupId 
+          - !Ref MsSqlAccessSgr 
+        TagSpecifications: 
+          - 
+            ResourceType: instance 
+            Tags: 
+              - 
+                Key: Name 
+                Value: !Sub "${NameTag}-web" 
+              - 
+                Key: InstallDynatrace 
+                Value: True 
+        UserData: 
+          Fn::Base64: 
+            Fn::Sub: 
+              | 
+              <script> 
+              cfn-init.exe -v -s ${AWS::StackName} -r WebFrontendLT -c create --region ${AWS::Region} 
+              </script> 
+  # AppTierSgUpdate: 
+    # Type: 'AWS::EC2::SecurityGroupIngress' 
+    # Properties:  
+      # FromPort: 8733 
+      # GroupId: !Ref AppTierLbSg 
+      # IpProtocol: tcp 
+      # SourceSecurityGroupId: !GetAtt sgWeb.GroupId 
+      # ToPort: 8733 
+  WebFrontendASG: 
+    Type: 'AWS::AutoScaling::AutoScalingGroup' 
+    Properties: 
+      AutoScalingGroupName: !Sub "${NameTag}-web-asg" 
+      VPCZoneIdentifier: 
+        - '{{resolve:ssm:websubnet1:1}}' 
+        - '{{resolve:ssm:websubnet2:1}}' 
+        - '{{resolve:ssm:websubnet3:1}}' 
+      Cooldown: "300" 
+      DesiredCapacity: !Ref WebFrontendAsgMinSize 
+      HealthCheckGracePeriod: 3600 
+      HealthCheckType: ELB 
+      MaxSize: !Ref WebFrontendAsgMaxSize 
+      MetricsCollection: 
+        - 
+          Granularity: 1Minute 
+      MinSize: !Ref WebFrontendAsgMinSize 
+      MixedInstancesPolicy: 
+        InstancesDistribution:  
+          OnDemandBaseCapacity: 1
+          OnDemandPercentageAboveBaseCapacity: 100 
+        LaunchTemplate: 
+          LaunchTemplateSpecification: 
+            LaunchTemplateId: !Ref WebFrontendLT 
+            Version: "1" 
+          Overrides: 
+            - InstanceType: t3.large 
+            - InstanceType: m5a.xlarge 
+      NotificationConfigurations: 
+        - 
+          NotificationTypes: 
+            - autoscaling:EC2_INSTANCE_LAUNCH 
+            - autoscaling:EC2_INSTANCE_LAUNCH_ERROR 
+            - autoscaling:EC2_INSTANCE_TERMINATE 
+            - autoscaling:EC2_INSTANCE_TERMINATE_ERROR 
+            - autoscaling:TEST_NOTIFICATION 
+          TopicARN: '{{resolve:ssm:sns-infrastructure-topic:1}}' 
+      Tags: 
+        - 
+          Key: Name 
+          Value: !Sub "${NameTag}-web-asg" 
+          PropagateAtLaunch: False 
+      TargetGroupARNs: 
+        -  
+          !Ref WebFrontendTG 
+      TerminationPolicies:  
+        - NewestInstance 
+    CreationPolicy: 
+      ResourceSignal: 
+        Count: !Ref WebFrontendAsgMinSize 
+        Timeout: PT50M 
+    UpdatePolicy: 
+      AutoScalingRollingUpdate: 
+        MaxBatchSize: !Ref WebFrontendAsgMinSize 
+        MinInstancesInService: !Ref WebFrontendAsgMinSize 
+        MinSuccessfulInstancesPercent: !Ref WebFrontendAsgMinSize 
+        PauseTime: PT50M 
+        SuspendProcesses: 
+          - AlarmNotification 
+        WaitOnResourceSignals: True 
+  ScaleUpPolicy: 
+    Type: AWS::AutoScaling::ScalingPolicy 
+    Properties: 
+      AdjustmentType: ChangeInCapacity 
+      AutoScalingGroupName: !Ref WebFrontendASG 
+      Cooldown: 2700 
+      ScalingAdjustment: 1 
+  ScaleDownPolicy: 
+    Type: AWS::AutoScaling::ScalingPolicy 
+    Properties: 
+      AdjustmentType: ChangeInCapacity 
+      AutoScalingGroupName: !Ref WebFrontendASG 
+      Cooldown: 3600 
+      ScalingAdjustment: -1 
+  CPUAlarmHigh: 
+    Type: AWS::CloudWatch::Alarm 
+    Properties: 
+      EvaluationPeriods: 5 
+      Statistic: Average 
+      Threshold: 30 
+      AlarmDescription: Scale-up if CPU > 30% for 5 minutes 
+      Period: 60 
+      AlarmActions: 
+      - Ref: ScaleUpPolicy 
+      Namespace: AWS/EC2 
+      Dimensions: 
+        - Name: AutoScalingGroupName 
+          Value: !Ref WebFrontendASG 
+      ComparisonOperator: GreaterThanThreshold 
+      MetricName: CPUUtilization 
+  CPUAlarmLow: 
+    Type: AWS::CloudWatch::Alarm 
+    Properties: 
+      AlarmDescription: Scale-down if CPU < 10% for 1 hour 
+      MetricName: CPUUtilization 
+      Namespace: AWS/EC2 
+      Statistic: Average 
+      Period: 60 
+      EvaluationPeriods: 60 
+      Threshold: 10 
+      AlarmActions: 
+        - !Ref ScaleDownPolicy 
+      Dimensions: 
+        - Name: AutoScalingGroupName 
+          Value: !Ref WebFrontendASG 
+      ComparisonOperator: LessThanThreshold 
+  WebFrontendTG: 
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup' 
+    Properties: 
+      Matcher: 
+        HttpCode: "200" 
+      HealthCheckIntervalSeconds: 120 
+      HealthCheckPort: "8443" 
+      HealthCheckTimeoutSeconds: 15 
+      HealthyThresholdCount: 2 
+      Name: !Sub "${NameTag}-web-tg" 
+      Port: 443 
+      Protocol: HTTPS 
+      Tags: 
+        - 
+          Key: Name 
+          Value: !Sub "${NameTag}-web-tg" 
+      UnhealthyThresholdCount: 10 
+      VpcId: '{{resolve:ssm:VPC:1}}' 
+  WebFrontendLB: 
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer' 
+    Properties: 
+      LoadBalancerAttributes: 
+        - 
+          Key: access_logs.s3.enabled 
+          Value: "true" 
+        - 
+          Key: access_logs.s3.bucket 
+          Value: !Join 
+            - '' 
+            - - '{{resolve:ssm:AccountShortName:1}}'
+              - '-logs'
+        - 
+          Key: access_logs.s3.prefix 
+          Value: elb 
+        - 
+          Key: routing.http2.enabled 
+          Value: true 
+        - 
+          Key: deletion_protection.enabled 
+          Value: false 
+        - 
+          Key: idle_timeout.timeout_seconds 
+          Value: 60 
+      Name: !Sub "${NameTag}-web-lb" 
+      Scheme: internal 
+      SecurityGroups: 
+        - !GetAtt sgWebLb.GroupId 
+      Subnets: 
+        - '{{resolve:ssm:websubnet1:1}}' 
+        - '{{resolve:ssm:websubnet2:1}}' 
+        - '{{resolve:ssm:websubnet3:1}}' 
+      Tags: 
+        - 
+          Key: Name 
+          Value: !Sub "${NameTag}-web-lb" 
+      Type: application 
+  WebFrontendListener: 
+    Type: 'AWS::ElasticLoadBalancingV2::Listener' 
+    Properties: 
+      Certificates: 
+        - CertificateArn: !Ref WebFrontendLBCertificateArn 
+      DefaultActions: 
+        - TargetGroupArn: !Ref WebFrontendTG 
+          Type: forward 
+      LoadBalancerArn: !Ref WebFrontendLB 
+      Port: 443 
+      Protocol: HTTPS 
+  WebFrontendTGCWAlarm: 
+    Type: 'AWS::CloudWatch::Alarm' 
+    Properties: 
+      AlarmActions: 
+        - '{{resolve:ssm:sns-infrastructure-topic:1}}' 
+      AlarmDescription: !Sub "${NameTag} Target Group CloudWatch Alarm." 
+      ComparisonOperator: GreaterThanOrEqualToThreshold 
+      Dimensions: 
+        - 
+          Name: TargetGroup 
+          Value: !GetAtt WebFrontendTG.TargetGroupFullName 
+        - 
+          Name: LoadBalancer 
+          Value: !GetAtt WebFrontendLB.LoadBalancerFullName 
+      EvaluationPeriods: 5 
+      MetricName: UnHealthyHostCount 
+      Namespace: AWS/ApplicationELB 
+      OKActions: 
+        - '{{resolve:ssm:sns-infrastructure-topic:1}}' 
+      Period: 120 
+      Statistic: Average 
+      Threshold: 2 
+      TreatMissingData: missing 
+      Unit: Count 
+  AsgProcessModificationRole: 
+    Type: AWS::IAM::Role 
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: 2012-10-17 
+        Statement: 
+        - Action: ['sts:AssumeRole'] 
+          Effect: Allow 
+          Principal: 
+            Service: [lambda.amazonaws.com] 
+      Policies: 
+      - PolicyName: AsgProcessModification 
+        PolicyDocument: 
+          Version: 2012-10-17 
+          Statement: 
+          - Effect: Allow 
+            Action: 
+            - 'autoscaling:ResumeProcesses' 
+            - 'autoscaling:SuspendProcesses' 
+            Resource: '*' 
+          - Effect: Allow 
+            Action: 
+            - logs:CreateLogGroup, 
+            - logs:CreateLogStream, 
+            - logs:PutLogEvents 
+            Resource: 'arn:aws:logs:*:*:*' 
+  AsgProcessModifierFunction: 
+    Type: AWS::Lambda::Function 
+    Properties: 
+      Description: 'Modifies ASG processes during CF stack creation' 
+      Code: 
+        ZipFile: | 
+          import cfnresponse 
+          import boto3 
+ 
+          client = boto3.client('autoscaling') 
+ 
+          def handler(event, context): 
+              # CFN action for the stack itself (Create, Update or Delete) 
+              cfn_event = event['RequestType'] 
+ 
+              # Input 
+              props = event['ResourceProperties'] 
+ 
+              # Can be used for debugging, outputs to CloudWatch Logs 
+              print("CFN event: {}, Parameter1: {}".format(cfn_event, props)) 
+              # Sample response payload 
+              response = { 
+                "cfn_event": cfn_event, 
+                "parameters": props 
+              } 
+ 
+              print(response) 
+ 
+              # This is used to signal back to CloudFormation for the custom resource 
+              if cfn_event in ["Create", "Update"]: 
+                if props['Action'] == 'SuspendProcesses': 
+                  response = client.suspend_processes(AutoScalingGroupName=props['AutoScalingGroupName'], ScalingProcesses=props['ScalingProcesses']) 
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, response) 
+              elif cfn_event in ["Delete"]: 
+                response = client.resume_processes(AutoScalingGroupName=props['AutoScalingGroupName'], ScalingProcesses=props['ScalingProcesses']) 
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, response) 
+      Handler: index.handler 
+      Role: !GetAtt AsgProcessModificationRole.Arn 
+      Runtime: 'python3.6' 
+  ModifyAsg: 
+    Type: AWS::CloudFormation::CustomResource 
+    Version: 1.0 
+    Properties: 
+      ServiceToken: !GetAtt AsgProcessModifierFunction.Arn 
+      Action: SuspendProcesses 
+      AutoScalingGroupName: !Ref WebFrontendASG 
+      ScalingProcesses: 
+      - Terminate 
+      - ReplaceUnhealthy 
+      - AZRebalance 
+      - ScheduledActions 
