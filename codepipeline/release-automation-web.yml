@@ -13,19 +13,19 @@ Parameters:
   SourceBucket:
     Description: S3 bucket containing both portal web files
     Type: String
-    Default: ddwa-prodsupport-release-artifacts-pipeline
+    Default: S3Bucket
   CodeBucket:
     Description: S3 bucket CodeBuild and CodeDeploy source
     Type: String
-    Default: ddwa-prodsupport-deployment
+    Default: S3Bucket
   CodeDeployTargetTagKey:
     Description: Tag Key for CodeDeploy Deployment Group
     Type: String
     Default: Name
   CodeDeployTargetTagValue:
-    Description: Tag Key for CodeDeploy Deployment Group
+    Description: Tag Value for CodeDeploy Deployment Group
     Type: String
-    Default: prodsupport-web
+    Default: Value
     
 Resources:
   WebCDCodeBuildRole:
