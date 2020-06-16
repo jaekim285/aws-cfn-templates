@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: 2010-09-09 
+ 
+Description: >- 
+  This template deploys a base foundation stack into a Control Tower account.
+
+Metadata: 
+  'AWS::CloudFormation::Interface': 
+    ParameterGroups: 
+      - # VPC
+        Label: 
+          default: VPC Configuration
+        Parameters: 
+          - VPCID
+      - # Subnet1
+        Label: 
+          default: Subnet1 Configuration 
+        Parameters: 
+          - Subnet1AZ 
+          - Subnet1CIDR 
+          - Subnet1Name 
+      - # Subnet2
+        Label: 
+          default: Subnet2 Configuration 
+        Parameters: 
+          - Subnet2AZ 
+          - Subnet2CIDR 
+          - Subnet2Name 
+      - # Subnet3
+        Label: 
+          default: Subnet3 Configuration 
+        Parameters: 
+          - Subnet3AZ 
+          - Subnet3CIDR 
+          - Subnet3Name 
+      - # Subnet4
+        Label: 
+          default: Subnet4 Configuration 
+        Parameters: 
+          - Subnet4AZ 
+          - Subnet4CIDR 
+          - Subnet4Name 
+      - # Subnet5
+        Label: 
+          default: Subnet5 Configuration 
+        Parameters: 
+          - Subnet5AZ 
+          - Subnet5CIDR 
+          - Subnet5Name 
+      - # Subnet6
+        Label: 
+          default: Subnet6 Configuration 
+        Parameters: 
+          - Subnet6AZ 
+          - Subnet6CIDR 
+          - Subnet6Name 
+
+Parameters:
+  # VPC
+  VPCID: 
+    Description: A VPC ID, such as vpc-a123baa3.
+    Type: AWS::EC2::VPC::Id 
+  # Subnet1
+  Subnet1AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet1CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet1Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+  # Subnet2
+  Subnet2AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet2CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet2Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+  # Subnet3
+  Subnet3AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet3CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet3Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+  # Subnet4
+  Subnet4AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet4CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet4Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+  # Subnet5
+  Subnet5AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet5CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet5Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+  # Subnet6
+  Subnet6AZ:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: AWS::EC2::AvailabilityZone::Name
+  Subnet6CIDR:
+    Description: The IPv4 CIDR block assigned to the subnet.
+    Type: String
+  Subnet6Name:
+    Description: An Availability Zone, such as us-west-2a.
+    Type: String
+
+Resources:
+  # Subnet1
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet1CIDR
+      AvailabilityZone: !Ref Subnet1AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet1Name
+  # Subnet2
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet2CIDR
+      AvailabilityZone: !Ref Subnet2AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet2Name
+  # Subnet3
+  Subnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet3CIDR
+      AvailabilityZone: !Ref Subnet3AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet3Name
+  # Subnet4
+  Subnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet4CIDR
+      AvailabilityZone: !Ref Subnet4AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet4Name
+  # Subnet5
+  Subnet5:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet5CIDR
+      AvailabilityZone: !Ref Subnet5AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet5Name
+  # Subnet6
+  Subnet6:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPCID
+      CidrBlock: !Ref Subnet6CIDR
+      AvailabilityZone: !Ref Subnet6AZ
+      Tags:
+      - Key: Name
+        Value: !Ref Subnet6Name
+  # Public RouteTable
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+      - Key: Name
+        Value: public-rt
+      VpcId: !Ref VPCID
+  # Private RouteTable
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+      - Key: Name
+        Value: private-rt
+      VpcId: !Ref VPCID
+  # PrivateSubnetDefaultRoute:
+  PrivateSubnetDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PrivateRT
+  # PublicSubnet1 Route Table Association
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet1
+    Properties:
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref Subnet1
+  # PublicSubnet2 Route Table Association
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet2
+    Properties:
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref Subnet2
+  # PublicSubnet3 Route Table Association
+  Subnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet3
+    Properties:
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref Subnet3
+  # PrivateSubnet4 Route Table Association
+  Subnet4RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet4
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref Subnet4
+  # PrivateSubnet5 Route Table Association
+  Subnet5RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet5
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref Subnet5
+  # PrivateSubnet6 Route Table Association
+  Subnet6RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: Subnet6
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref Subnet6
+Outputs:
+  Subnet1:
+    Description: Subnet1 (Public)
+    Value: !Ref Subnet1
+  Subnet2:
+    Description: Subnet2 (Public)
+    Value: !Ref Subnet2
+  Subnet3:
+    Description: Subnet3 (Public)
+    Value: !Ref Subnet3
+  Subnet4:
+    Description: Subnet4 (Private)
+    Value: !Ref Subnet4
+  Subnet5:
+    Description: Subnet5 (Private)
+    Value: !Ref Subnet5
+  Subnet6:
+    Description: Subnet6 (Private)
+    Value: !Ref Subnet6
+  PublicSubnetRT:
+    Description: Public Subnet Route Table
+    Value: !Ref PublicRT
+  PrivateSubnetRT:
+    Description: Private Subnet Route Table
+    Value: !Ref PrivateRT
